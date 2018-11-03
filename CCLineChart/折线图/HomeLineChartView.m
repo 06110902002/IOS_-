@@ -23,10 +23,8 @@
 
 
 @implementation HomeLineChartView
--(instancetype)initWithFrame:(CGRect)frame
-{
-    if (self = [super initWithFrame:frame])
-    {
+-(instancetype)initWithFrame:(CGRect)frame{
+    if (self = [super initWithFrame:frame]){
         self.startDrawLine = false;
         self.curPos = CGPointZero;
         self.posAndValue = [[NSMutableDictionary alloc] init];
@@ -54,7 +52,7 @@
         _contentView = [[UIView alloc]initWithFrame:CGRectMake(0, 10 + _titleLabel.frame.size.height + 10, self.bounds.size.width, self.bounds.size.height - 40)];
         _contentView.backgroundColor = [UIColor clearColor];
         [self addSubview:_contentView];
-        //_contentView.backgroundColor = [UIColor brownColor];
+        _contentView.backgroundColor = [UIColor clearColor];
         [self addLineChartView];
         self.pointCenterArr = [NSMutableArray array];
         
@@ -91,23 +89,22 @@
 }
 
 #pragma mark - UI
-- (void)addLineChartView
-{
+- (void)addLineChartView{
     _lineChartView = [[UIView alloc]initWithFrame:CGRectMake(5, 50, _contentView.bounds.size.width - 15, _contentView.bounds.size.height-100)];
     _lineChartView.layer.masksToBounds = YES;
     _lineChartView.layer.borderWidth = 0.5;
     _lineChartView.layer.borderColor = [UIColor colorWithRed:216/255.0 green:216/255.0  blue:216/255.0  alpha:1].CGColor;
     _lineChartView.backgroundColor = [UIColor clearColor];
     [_contentView addSubview:_lineChartView];
+    [_lineChartView setClipsToBounds:false];
 }
 
--(void)addYAxisViews
-{
+-(void)addYAxisViews{
     CGFloat height = _lineChartView.bounds.size.height / (_dataArrOfY.count - 1);
     for (int i = 0;i< _dataArrOfY.count ;i++ )
     {
-        //if([_dataArrOfY[i] integerValue] == 0){continue;}
-        UILabel *leftLabel = [[UILabel alloc]initWithFrame:CGRectMake(5, height * i - height / 2 - 10, 30, height)];
+        if([_dataArrOfY[i] integerValue] == 0){continue;}
+        UILabel *leftLabel = [[UILabel alloc]initWithFrame:CGRectMake(5, height * i - height / 2 + 10, 30, 20)];
         leftLabel.font = [UIFont systemFontOfSize:10];
         leftLabel.textColor = [UIColor colorWithRed:74/255.0 green:74/255.0  blue:74/255.0  alpha:1];
         leftLabel.textAlignment = NSTextAlignmentLeft;
@@ -119,13 +116,14 @@
 
 -(void)addXAxisViews
 {
+    CGFloat white = _lineChartView.bounds.size.height /( _dataArrOfY.count - 1);
     CGFloat height = _lineChartView.bounds.size.width /( _dataArrOfX.count - 1);
     for (int i = 0;i< _dataArrOfX.count;i++ )
     {
         if([_dataArrOfX[i] integerValue] % 5 != 0){continue;}
         UILabel *leftLabel = [[UILabel alloc]initWithFrame:CGRectMake(
                                                             i*height - 1.5 * height +_lineChartView.frame.origin.x,
-                                                    _lineChartView.bounds.origin.y+_lineChartView.bounds.size.height, 30, 20)];
+                                                    white+_lineChartView.bounds.size.height, 30, 20)];
         leftLabel.font = [UIFont systemFontOfSize:10];
         leftLabel.textColor = [UIColor colorWithRed:74/255.0 green:74/255.0  blue:74/255.0  alpha:1];
         leftLabel.text = _dataArrOfX[i];
@@ -181,7 +179,9 @@
         NSValue *point = [NSValue valueWithCGPoint:v.center];
         [self.pointCenterArr addObject:point];
         
-        [self.posAndValue setObject:_dataArrOfPoint[i] forKey:[NSString stringWithFormat:@"%f",v.center.x]];
+        //将具体那一天的的view 与 值关联起来，通过这个值获取view
+        //获取视图对象，继而获取 视图对象的座标，来控制中间l圆的动态座标
+        [self.posAndValue setObject:v forKey:_dataArrOfPoint[i]];
     }
 //    for (NSString *string in self.posAndValue){
 //        NSLog(@"181-------string = %@", string);
@@ -289,6 +289,7 @@
     [self drawIndexLine:self.curPos];
     [self drawTopIndexLine:self.curPos];
     [self drawDetailMaker:self.curPos content:self.selectDaySum];
+    [self drawMidleIndexCircle:self.curPos];
 }
 
 
@@ -345,6 +346,40 @@
     CGContextSetLineWidth(context, 0.8);
     CGContextDrawPath(context, kCGPathFillStroke);
    
+}
+
+
+/**
+ 画中间指示l圆
+
+ @param point 当前手指滑动的座标
+ */
+-(void) drawMidleIndexCircle:(CGPoint) point{
+    if(!self.startDrawLine || self.selectDaySum == nil) return;
+    
+    UIView* curValueView = [self.posAndValue objectForKey:self.selectDaySum];
+    CGPoint curValue = curValueView.center;
+    
+    CGPoint parentPos = [_lineChartView convertPoint:curValue toView:self];
+    
+    //先画外面大圆
+    CGRect frame = CGRectMake(point.x - 10, parentPos.y - 10, 20, 20);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextAddEllipseInRect(context, frame);
+    [[UIColor colorWithRed:0.20f green:0.60f blue:0.80f alpha:0.5f] set];
+    CGContextFillPath(context);
+    
+    //画中间圆
+    CGRect midCirlceRect = CGRectMake(point.x - 7, parentPos.y - 7, 14, 14);
+    CGContextAddEllipseInRect(context, midCirlceRect);
+    [[UIColor colorWithRed:1.00f green:1.00f blue:1.00f alpha:1.0f] set];
+    CGContextFillPath(context);
+    
+    //画m内圆点
+    CGRect innerCirlceRect = CGRectMake(point.x - 5, parentPos.y - 5, 10, 10);
+    CGContextAddEllipseInRect(context, innerCirlceRect);
+    [[UIColor colorWithRed:0.40f green:0.27f blue:0.67f alpha:1.0f] set];
+    CGContextFillPath(context);
 }
 
 /**
@@ -425,6 +460,12 @@
     }
     return value;
 }
+
+//-(CGPoint) getPointByPoint:(CGFloat)x{
+//    NSString* value = [self getValueByPosX:x];
+//    UIView* view = [self.posAndValue objectForKey:value];
+//    return view.center;
+//}
 
 
 

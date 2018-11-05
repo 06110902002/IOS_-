@@ -43,25 +43,25 @@
         
 
         //左上角按钮
-        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(15, 10, 200, 20)];
-        _titleLabel.font = [UIFont systemFontOfSize:12];
-        _titleLabel.textAlignment = NSTextAlignmentLeft;
-        _titleLabel.textColor = [UIColor colorWithRed:122/255.0 green:122/255.0  blue:122/255.0  alpha:1];
-        _titleLabel.backgroundColor = [UIColor clearColor];
-        [self addSubview:_titleLabel];
+//        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(15, 10, 200, 20)];
+//        _titleLabel.font = [UIFont systemFontOfSize:12];
+//        _titleLabel.textAlignment = NSTextAlignmentLeft;
+//        _titleLabel.textColor = [UIColor colorWithRed:122/255.0 green:122/255.0  blue:122/255.0  alpha:1];
+//        _titleLabel.backgroundColor = [UIColor clearColor];
+//        [self addSubview:_titleLabel];
         
         //下面按钮
-        _bottomLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 200, 20)];
-        _bottomLabel.center = CGPointMake(self.bounds.size.width / 2, self.bounds.size.height - 10 - 20 / 2);
-        _bottomLabel.font = [UIFont systemFontOfSize:12];
-        _bottomLabel.textAlignment = NSTextAlignmentCenter;
-        _bottomLabel.textColor = [UIColor colorWithRed:0/255.0 green:165/255.0  blue:87/255.0  alpha:1];
-        _bottomLabel.backgroundColor = [UIColor clearColor];
-        [self addSubview:_bottomLabel];
+//        _bottomLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 200, 20)];
+//        _bottomLabel.center = CGPointMake(self.bounds.size.width / 2, self.bounds.size.height - 10 - 20 / 2);
+//        _bottomLabel.font = [UIFont systemFontOfSize:12];
+//        _bottomLabel.textAlignment = NSTextAlignmentCenter;
+//        _bottomLabel.textColor = [UIColor colorWithRed:0/255.0 green:165/255.0  blue:87/255.0  alpha:1];
+//        _bottomLabel.backgroundColor = [UIColor clearColor];
+//        [self addSubview:_bottomLabel];
         
         
         //中间区域
-        _contentView = [[UIView alloc]initWithFrame:CGRectMake(0, 10 + _titleLabel.frame.size.height + 10, self.bounds.size.width, self.bounds.size.height - 40)];
+        _contentView = [[UIView alloc]initWithFrame:CGRectMake(0, 40, self.bounds.size.width, self.bounds.size.height - 40)];
         _contentView.backgroundColor = [UIColor clearColor];
         [self addSubview:_contentView];
         _contentView.backgroundColor = [UIColor clearColor];
@@ -504,6 +504,7 @@
  */
 -(void) drawDetailMaker:(CGPoint)point content:(NSString*) text{
     if(!self.startDrawLine || self.selectDaySum == nil) return;
+    NSLog(@"507----------:%d",[self getDay:point.x] + 1);
     CGMutablePathRef path = CGPathCreateMutable();
     CGRect rectangle = CGRectMake(point.x - 50, 2 * self.topIndexLineTopMargin,100, 60.0f); //指定矩形
     CGPathAddRect(path,NULL, rectangle);//将矩形添加到路径中
@@ -528,7 +529,7 @@
     NSDictionary *attributes = @{NSFontAttributeName:font, NSParagraphStyleAttributeName:textStyle,
                                  NSForegroundColorAttributeName:[UIColor whiteColor]
                                  };//构建属性集合
-    NSString* value = [NSString stringWithFormat:@"%@\n%@\n%@",@"2018/11/05",@"每日利润",text];
+    NSString* value = [NSString stringWithFormat:@"%@/%@/%ld\n%@\n%@",@"2018",@"05",([self getDay:point.x] + 1),@"每日利润",text];
     CGSize strSize = [value sizeWithAttributes:attributes];  //获得size
     CGFloat marginTop = (rectangle.size.height - strSize.height) / 2;
     //垂直居中要自己计算
@@ -616,6 +617,11 @@
     NSString* value = [self getValueByPosX:x];
     UIView* view = [self.posAndValue objectForKey:value];
     return view.center;
+}
+-(NSInteger) getDay:(CGFloat) x{
+    CGFloat dayUnit = _lineChartView.bounds.size.width /( _dataArrOfX.count - 1);   //一天所占用的格子
+    NSInteger index = x / dayUnit;
+    return index;
 }
 
 

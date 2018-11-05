@@ -11,9 +11,9 @@
 @interface HomeLineChartView : UIView
 
 //Y轴标题
-@property (nonatomic, strong) UILabel *titleLabel;
-//X轴标题
-@property (nonatomic, strong) UILabel *bottomLabel;
+//@property (nonatomic, strong) UILabel *titleLabel;
+////X轴标题
+//@property (nonatomic, strong) UILabel *bottomLabel;
 /** 点数据 */
 @property (nonatomic,strong) NSArray *dataArrOfPoint;
 /** Y轴坐标数据 */
@@ -22,6 +22,9 @@
 @property (nonatomic, strong) NSArray *dataArrOfX;
 
 @property(nonatomic,strong) UIBezierPath* bezierPath;
+
+@property(nonatomic,strong) NSString* yearStr;
+@property(nonatomic,strong) NSString* monthStr;
 
 
 @end

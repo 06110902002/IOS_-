@@ -21,5 +21,7 @@
 /** X轴坐标数据 */
 @property (nonatomic, strong) NSArray *dataArrOfX;
 
+@property(nonatomic,strong) UIBezierPath* bezierPath;
+
 
 @end

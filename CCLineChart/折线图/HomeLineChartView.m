@@ -19,6 +19,17 @@
 @property (nonatomic,assign) NSInteger topIndexLineWidth;
 @property(nonatomic,assign) NSInteger topIndexLineTopMargin;
 @property(nonatomic,strong) NSString* selectDaySum; //选中的消费金额
+@property(nonatomic,strong) UIBezierPath* fingerMoveLinePath;
+@property(nonatomic,strong) UIBezierPath* midCirclePath;
+@property(nonatomic,strong) UIBezierPath* outterCirclePath;
+@property(nonatomic,strong) UIBezierPath* innerCirclePath;
+
+@property(nonatomic,strong) CAShapeLayer* fingerMoveLineLayer;
+@property(nonatomic,strong) CAShapeLayer* outerCircleLayer;
+@property(nonatomic,strong) CAShapeLayer* midCircleLayer;
+@property(nonatomic,strong) CAShapeLayer* innerCircleLayer;
+
+
 @end
 
 
@@ -29,6 +40,7 @@
         self.curPos = CGPointZero;
         self.posAndValue = [[NSMutableDictionary alloc] init];
         self.topIndexLineTopMargin = 10;
+        
 
         //左上角按钮
         _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(15, 10, 200, 20)];
@@ -90,7 +102,7 @@
 
 #pragma mark - UI
 - (void)addLineChartView{
-    _lineChartView = [[UIView alloc]initWithFrame:CGRectMake(5, 50, _contentView.bounds.size.width - 15, _contentView.bounds.size.height-100)];
+    _lineChartView = [[UIView alloc]initWithFrame:CGRectMake(5, 50, _contentView.bounds.size.width - 15, _contentView.bounds.size.height - 100)];
     _lineChartView.layer.masksToBounds = YES;
     _lineChartView.layer.borderWidth = 0.5;
     _lineChartView.layer.borderColor = [UIColor colorWithRed:216/255.0 green:216/255.0  blue:216/255.0  alpha:1].CGColor;
@@ -183,25 +195,17 @@
         //获取视图对象，继而获取 视图对象的座标，来控制中间l圆的动态座标
         [self.posAndValue setObject:v forKey:_dataArrOfPoint[i]];
     }
-//    for (NSString *string in self.posAndValue){
-//        NSLog(@"181-------string = %@", string);
-//    }
 
 }
 
--(void)addBezierLine
-{
+-(void)addBezierLine{
     //取得起点
     CGPoint p1 = [[self.pointCenterArr objectAtIndex:0] CGPointValue];
     UIBezierPath *beizer = [UIBezierPath bezierPath];
     [beizer moveToPoint:p1];
-    
     //添加线
-    for (int i = 0;i<self.pointCenterArr.count;i++ )
-    {
-        
-        if (i != 0)
-        {
+    for (int i = 0;i<self.pointCenterArr.count;i++ ){
+        if (i != 0){
             CGPoint prePoint = [[self.pointCenterArr objectAtIndex:i-1] CGPointValue];
             CGPoint nowPoint = [[self.pointCenterArr objectAtIndex:i] CGPointValue];
             [beizer addCurveToPoint:nowPoint controlPoint1:CGPointMake((nowPoint.x+prePoint.x)/2, prePoint.y) controlPoint2:CGPointMake((nowPoint.x+prePoint.x)/2, nowPoint.y)];
@@ -211,9 +215,13 @@
     CAShapeLayer *shapeLayer = [CAShapeLayer layer];
     shapeLayer.path = beizer.CGPath;
     shapeLayer.fillColor = [UIColor clearColor].CGColor;
-    shapeLayer.strokeColor = [UIColor colorWithRed:245/255.0 green:166/255.0  blue:35/255.0  alpha:1].CGColor;
+    shapeLayer.strokeColor = [self colorWithHexString:@"#1f96f2"].CGColor;
     shapeLayer.lineWidth = 2;
+    shapeLayer.zPosition = -2;
     [_lineChartView.layer addSublayer:shapeLayer];
+    
+    
+    
     //设置动画
     CABasicAnimation *anmi = [CABasicAnimation animation];
     anmi.keyPath = @"strokeEnd";
@@ -265,7 +273,8 @@
     gradientLayer.endPoint = CGPointMake(0, 1);
     gradientLayer.cornerRadius = 5;
     gradientLayer.masksToBounds = YES;
-    gradientLayer.colors = @[(__bridge id)[UIColor colorWithRed:245/255.0 green:166/255.0  blue:35/255.0  alpha:0.6].CGColor,(__bridge id)[UIColor colorWithRed:245/255.0 green:166/255.0  blue:35/255.0  alpha:0.2].CGColor];
+    gradientLayer.zPosition = -4;
+    gradientLayer.colors = @[(__bridge id)[UIColor colorWithRed:222/255.0 green:240/255.0  blue:254/255.0  alpha:0.8].CGColor,(__bridge id)[UIColor colorWithRed:222/255.0 green:240/255.0  blue:254/255.0  alpha:0.6].CGColor];
     gradientLayer.locations = @[@(0.5f)];
 
     CALayer *baseLayer = [CALayer layer];
@@ -281,16 +290,110 @@
     anmi1.fillMode = kCAFillModeForwards;
     anmi1.autoreverses = NO;
     anmi1.removedOnCompletion = NO;
-    [gradientLayer addAnimation:anmi1 forKey:@"bounds"]; 
+    [gradientLayer addAnimation:anmi1 forKey:@"bounds"];
+    
+    
+    self.fingerMoveLinePath = [UIBezierPath bezierPath];
+    self.midCirclePath = [UIBezierPath bezierPath];
+    self.fingerMoveLineLayer = [CAShapeLayer layer];
+    self.midCircleLayer = [CAShapeLayer layer];
+    self.outerCircleLayer = [CAShapeLayer layer];
+    self.innerCircleLayer = [CAShapeLayer layer];
+    
 }
 
 - (void)drawRect:(CGRect)rect{
     [super drawRect:rect];
-    [self drawIndexLine:self.curPos];
     [self drawTopIndexLine:self.curPos];
     [self drawDetailMaker:self.curPos content:self.selectDaySum];
-    [self drawMidleIndexCircle:self.curPos];
+    //[self drawMidleIndexCircle:self.curPos];
+    [self drawFingerMoveLine:self.curPos];
 }
+
+-(void) drawFingerMoveLine:(CGPoint) curPos{
+     if(!self.startDrawLine) return;
+    UIView* curValueView = [self.posAndValue objectForKey:self.selectDaySum];
+    CGPoint newPos = [self convertPoint:curPos toView:_lineChartView];
+    if(curPos.x < 0 || !curValueView){
+         [self.fingerMoveLineLayer removeFromSuperlayer];
+    }else{
+        if(self.fingerMoveLineLayer){
+            [self.fingerMoveLineLayer removeFromSuperlayer];
+            self.fingerMoveLineLayer.path = nil;
+            self.fingerMoveLineLayer.fillColor = [UIColor clearColor].CGColor;
+            self.fingerMoveLineLayer.strokeColor = [UIColor clearColor].CGColor;
+            
+        }
+        self.fingerMoveLinePath = [UIBezierPath bezierPath];
+        [self.fingerMoveLinePath moveToPoint:CGPointMake(newPos.x, -10)];
+        [self.fingerMoveLinePath addLineToPoint:CGPointMake(newPos.x, _lineChartView.bounds.size.height)];
+        self.fingerMoveLineLayer.path = self.fingerMoveLinePath.CGPath;
+        self.fingerMoveLineLayer.fillColor = [UIColor redColor].CGColor;
+        self.fingerMoveLineLayer.strokeColor = [UIColor redColor].CGColor;
+        self.fingerMoveLineLayer.lineWidth = 1;
+        [_lineChartView.layer addSublayer:self.fingerMoveLineLayer];
+    }
+    
+    
+    if(!curValueView) {
+         [self.outerCircleLayer removeFromSuperlayer];
+         [self.midCircleLayer removeFromSuperlayer];
+         [self.innerCircleLayer removeFromSuperlayer];
+        return;
+    }
+    // 图层中心点、大小（中心点和大小构成frame）
+    if(self.outerCircleLayer){
+        [self.outerCircleLayer removeFromSuperlayer];
+        self.outerCircleLayer.path = nil;
+        self.outerCircleLayer.fillColor = [UIColor clearColor].CGColor;
+        self.outerCircleLayer.strokeColor = [UIColor clearColor].CGColor;
+        self.outterCirclePath = nil;
+    }
+    self.outterCirclePath = [UIBezierPath bezierPath];
+    [self.outterCirclePath addArcWithCenter:CGPointMake(newPos.x, curValueView.center.y)
+                    radius:10
+                startAngle:0
+                  endAngle:M_PI*2
+                 clockwise:YES];
+    self.outerCircleLayer.fillColor = [UIColor colorWithRed:239.0/255.0f green:180.0 / 255.f blue:167.0 / 255.0f alpha:1.0f].CGColor;
+    self.outerCircleLayer.path = self.outterCirclePath.CGPath;
+    [_lineChartView.layer addSublayer:self.outerCircleLayer];
+    
+    //中u圈
+    self.midCirclePath = [UIBezierPath bezierPath];
+    if(self.midCircleLayer){
+        [self.midCircleLayer removeFromSuperlayer];
+        self.midCircleLayer.path = nil;
+        self.midCircleLayer.fillColor = [UIColor clearColor].CGColor;
+        self.midCircleLayer.strokeColor = [UIColor clearColor].CGColor;
+    }
+    [self.midCirclePath addArcWithCenter:CGPointMake(newPos.x, curValueView.center.y)
+                                  radius:6
+                              startAngle:0
+                                endAngle:M_PI*2
+                               clockwise:YES];
+    self.midCircleLayer.fillColor = [UIColor colorWithRed:1.0f green:1.f blue:1.0f alpha:1.0f].CGColor;
+    self.midCircleLayer.path = self.midCirclePath.CGPath;
+    [_lineChartView.layer addSublayer:self.midCircleLayer];
+    //内圈
+    self.innerCirclePath = [UIBezierPath bezierPath];
+    if(self.innerCircleLayer){
+        [self.innerCircleLayer removeFromSuperlayer];
+        self.innerCircleLayer.path = nil;
+        self.innerCircleLayer.fillColor = [UIColor clearColor].CGColor;
+        self.innerCircleLayer.strokeColor = [UIColor clearColor].CGColor;
+    }
+    [self.innerCirclePath addArcWithCenter:CGPointMake(newPos.x, curValueView.center.y)
+                                  radius:3
+                              startAngle:0
+                                endAngle:M_PI*2
+                               clockwise:YES];
+    self.innerCircleLayer.fillColor = [UIColor colorWithRed:243.0/255.0f green:99.0 / 255.0f blue:66.0 / 255.0f alpha:1.0f].CGColor;
+    self.innerCircleLayer.path = self.innerCirclePath.CGPath;
+    [_lineChartView.layer addSublayer:self.innerCircleLayer];
+    
+}
+
 
 
 /**
@@ -310,6 +413,7 @@
         //[[UIColor greenColor]setFill];//设置绿色填充
         //[[UIColor blueColor]set];//同时设置填充和边框色
         CGContextDrawPath(context, kCGPathFillStroke);
+        
     }
 }
 
@@ -319,6 +423,7 @@
  @param point 当前座标
  */
 -(void) drawTopIndexLine:(CGPoint)point{
+   
     if(!self.startDrawLine) return;
     CGContextRef context=UIGraphicsGetCurrentContext();
     CGContextMoveToPoint(context, 0, self.topIndexLineTopMargin);
@@ -328,6 +433,8 @@
     [[UIColor redColor]setStroke];//设置红色边框
     CGContextDrawPath(context, kCGPathFillStroke);
     
+     UIView* curValueView = [self.posAndValue objectForKey:self.selectDaySum];
+    if(!curValueView || point.x < 0) return;
     //画索引三角形，使用3条线组成
     CGContextMoveToPoint(context, point.x - 5, self.topIndexLineTopMargin);
     CGContextAddLineToPoint(context, point.x, 15);
@@ -335,6 +442,13 @@
     CGContextMoveToPoint(context, point.x, 15);
     CGContextAddLineToPoint(context, point.x + 5, self.topIndexLineTopMargin);
     [[UIColor redColor]setStroke];//设置红色边框
+    CGContextClosePath(context);
+    CGContextSetLineWidth(context, 0.8);
+    CGContextDrawPath(context, kCGPathFillStroke);
+    
+    //画三角形中“|”
+    CGContextMoveToPoint(context, point.x, self.topIndexLineTopMargin + 4);
+    CGContextAddLineToPoint(context, point.x, self.topIndexLineTopMargin + 11);
     CGContextClosePath(context);
     CGContextSetLineWidth(context, 0.8);
     CGContextDrawPath(context, kCGPathFillStroke);
@@ -366,7 +480,7 @@
     CGRect frame = CGRectMake(point.x - 10, parentPos.y - 10, 20, 20);
     CGContextRef context = UIGraphicsGetCurrentContext();
     CGContextAddEllipseInRect(context, frame);
-    [[UIColor colorWithRed:0.20f green:0.60f blue:0.80f alpha:0.5f] set];
+    [[UIColor colorWithRed:239.0/255.0f green:180.0 / 255.f blue:167.0 / 255.0f alpha:0.5f] set];
     CGContextFillPath(context);
     
     //画中间圆
@@ -378,7 +492,7 @@
     //画m内圆点
     CGRect innerCirlceRect = CGRectMake(point.x - 5, parentPos.y - 5, 10, 10);
     CGContextAddEllipseInRect(context, innerCirlceRect);
-    [[UIColor colorWithRed:0.40f green:0.27f blue:0.67f alpha:1.0f] set];
+    [[UIColor colorWithRed:243.0/255.0f green:99.0 / 255.0f blue:66.0 / 255.0f alpha:1.0f] set];
     CGContextFillPath(context);
 }
 
@@ -395,8 +509,8 @@
     CGPathAddRect(path,NULL, rectangle);//将矩形添加到路径中
     CGContextRef currentContext = UIGraphicsGetCurrentContext();//获取上下文
     CGContextAddPath(currentContext, path);//将路径添加到上下文
-    [[UIColor colorWithRed:0.20f green:0.60f blue:0.80f alpha:1.0f] setFill];
-    [[UIColor colorWithRed:0.20f green:0.60f blue:0.80f alpha:1.0f] setStroke];
+    [[UIColor colorWithRed:242.0/255.0f green:99.0/255.0f blue:65.0 / 255.0f alpha:1.0f] setFill];
+    //[[UIColor colorWithRed:0.20f green:0.60f blue:0.80f alpha:1.0f] setStroke];
     CGContextSetLineWidth(currentContext,1.0f);
     CGContextDrawPath(currentContext, kCGPathFillStroke);
     CGPathRelease(path);
@@ -404,14 +518,16 @@
    
     //绘制文本
     CGContextSetLineWidth(currentContext, 1.0);
-    CGContextSetRGBFillColor (currentContext, 0.01, 0.01, 0.01, 1);
+    //CGContextSetRGBFillColor (currentContext, 1.0f, 1.0f, 1.0f, 1.0f);
     
     //段落格式
     NSMutableParagraphStyle *textStyle = [[NSMutableParagraphStyle defaultParagraphStyle] mutableCopy];
     textStyle.lineBreakMode = NSLineBreakByWordWrapping;
     textStyle.alignment = NSTextAlignmentCenter;
     UIFont  *font = [UIFont systemFontOfSize:14.0];
-    NSDictionary *attributes = @{NSFontAttributeName:font, NSParagraphStyleAttributeName:textStyle};//构建属性集合
+    NSDictionary *attributes = @{NSFontAttributeName:font, NSParagraphStyleAttributeName:textStyle,
+                                 NSForegroundColorAttributeName:[UIColor whiteColor]
+                                 };//构建属性集合
     NSString* value = [NSString stringWithFormat:@"%@\n%@\n%@",@"2018/11/05",@"每日利润",text];
     CGSize strSize = [value sizeWithAttributes:attributes];  //获得size
     CGFloat marginTop = (rectangle.size.height - strSize.height) / 2;
@@ -461,11 +577,46 @@
     return value;
 }
 
-//-(CGPoint) getPointByPoint:(CGFloat)x{
-//    NSString* value = [self getValueByPosX:x];
-//    UIView* view = [self.posAndValue objectForKey:value];
-//    return view.center;
-//}
+- (UIColor *) colorWithHexString: (NSString *)color{
+    
+    NSString *cString = [[color stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] uppercaseString];
+    
+    // String should be 6 or 8 characters
+    if ([cString length] < 6) {
+        return [UIColor clearColor];
+    }
+    // 判断前缀
+    if ([cString hasPrefix:@"0X"])
+        cString = [cString substringFromIndex:2];
+    if ([cString hasPrefix:@"#"])
+        cString = [cString substringFromIndex:1];
+    if ([cString length] != 6)
+        return [UIColor clearColor];
+    // 从六位数值中找到RGB对应的位数并转换
+    NSRange range;
+    range.location = 0;
+    range.length = 2;
+    //R、G、B
+    NSString *rString = [cString substringWithRange:range];
+    range.location = 2;
+    NSString *gString = [cString substringWithRange:range];
+    range.location = 4;
+    NSString *bString = [cString substringWithRange:range];
+    // Scan values
+    unsigned int r, g, b;
+    [[NSScanner scannerWithString:rString] scanHexInt:&r];
+    [[NSScanner scannerWithString:gString] scanHexInt:&g];
+    [[NSScanner scannerWithString:bString] scanHexInt:&b];
+    
+    return [UIColor colorWithRed:((float) r / 255.0f) green:((float) g / 255.0f) blue:((float) b / 255.0f) alpha:1.0f];
+
+}
+
+-(CGPoint) getPointByPoint:(CGFloat)x{
+    NSString* value = [self getValueByPosX:x];
+    UIView* view = [self.posAndValue objectForKey:value];
+    return view.center;
+}
 
 
 

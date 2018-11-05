@@ -8,7 +8,13 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ViewController : UIViewController
+@interface ViewController : UIViewController<UIPickerViewDelegate,UIPickerViewDataSource>
+
+@property(nonatomic,strong) UIPickerView* yearPickerView;
+@property(nonatomic,strong) NSMutableArray* yearArr;
+@property(nonatomic,strong) NSMutableArray* monthArr;
+@property(nonatomic,copy)NSString* year;
+@property(nonatomic,copy)NSString* month;
 
 
 @end

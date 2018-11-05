@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6B43BAD8219060950012E51B /* midCircle.png in Resources */ = {isa = PBXBuildFile; fileRef = 6B43BAD7219060950012E51B /* midCircle.png */; };
 		CBCEAF5320C50B1000D5FA8D /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CBCEAF5220C50B1000D5FA8D /* AppDelegate.m */; };
 		CBCEAF5620C50B1000D5FA8D /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CBCEAF5520C50B1000D5FA8D /* ViewController.m */; };
 		CBCEAF5920C50B1000D5FA8D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CBCEAF5720C50B1000D5FA8D /* Main.storyboard */; };
@@ -36,6 +37,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		6B43BAD7219060950012E51B /* midCircle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = midCircle.png; sourceTree = "<group>"; };
 		CBCEAF4E20C50B1000D5FA8D /* CCLineChart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CCLineChart.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBCEAF5120C50B1000D5FA8D /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		CBCEAF5220C50B1000D5FA8D /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -104,6 +106,7 @@
 		CBCEAF5020C50B1000D5FA8D /* CCLineChart */ = {
 			isa = PBXGroup;
 			children = (
+				6B43BAD7219060950012E51B /* midCircle.png */,
 				CBCEAF8420C50B9400D5FA8D /* 折线图 */,
 				CBCEAF5120C50B1000D5FA8D /* AppDelegate.h */,
 				CBCEAF5220C50B1000D5FA8D /* AppDelegate.m */,
@@ -251,6 +254,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6B43BAD8219060950012E51B /* midCircle.png in Resources */,
 				CBCEAF5E20C50B1000D5FA8D /* LaunchScreen.storyboard in Resources */,
 				CBCEAF5B20C50B1000D5FA8D /* Assets.xcassets in Resources */,
 				CBCEAF5920C50B1000D5FA8D /* Main.storyboard in Resources */,
@@ -445,6 +449,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = DGVJJ53UK4;
 				INFOPLIST_FILE = CCLineChart/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = Caroline.CCLineChart;
@@ -458,6 +463,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = DGVJJ53UK4;
 				INFOPLIST_FILE = CCLineChart/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = Caroline.CCLineChart;
